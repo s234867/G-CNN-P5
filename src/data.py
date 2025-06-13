@@ -58,6 +58,14 @@ def load_pcam_subset(train_size, test_size, data_dir=r'./data/raw', seed=42):
     X_train = torch.from_numpy(X_train).permute(0, 3, 1, 2).float() / 255.0 
     X_test = torch.from_numpy(X_test).permute(0, 3, 1, 2).float() / 255.0
 
+    # Add normalization (channel-wise)
+    mean = X_train.mean(dim=(0, 2, 3), keepdim=True)
+    std = X_train.std(dim=(0, 2, 3), keepdim=True)
+
+    # Apply to both train and test
+    X_train = (X_train - mean) / std
+    X_test = (X_test - mean) / std
+
     # Squeeze the labels so its [500] instead of [500, 1], also convert it to an int
     y_train = torch.from_numpy(y_train).squeeze().long()
     y_test = torch.from_numpy(y_test).squeeze().long()
