@@ -3,6 +3,16 @@ import numpy as np
 import os
 import random
 import torch
+from torch.utils.data import TensorDataset, DataLoader
+
+
+def set_seed(seed=42):
+    torch.manual_seed(seed)
+    np.random.seed(seed)
+    random.seed(seed)
+    if torch.cuda.is_available():
+        torch.cuda.manual_seed(seed)
+        torch.cuda.manual_seed_all(seed)
 
 def sample_indices(dataset_path, size):
     with h5py.File(dataset_path, 'r') as f:
@@ -20,13 +30,11 @@ def load_samples(dataset_path, indices):
     reorder = np.argsort(np.argsort(indices))
     return data_sorted[reorder]
 
-def load_pcam_subset(train_size, test_size):
-    data_dir='./data/raw/'
-
+def load_pcam_subset(train_size, test_size, data_dir=r'./data/raw', seed=42):
     # Reproducibility which is VERY important
-    random.seed(42)
-    np.random.seed(42)
-
+    set_seed(seed)
+    g = torch.Generator()
+    g.manual_seed(seed)
 
     # Paths for the data we have on pc
     train_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_train_x.h5')
@@ -50,14 +58,43 @@ def load_pcam_subset(train_size, test_size):
     X_train = torch.from_numpy(X_train).permute(0, 3, 1, 2).float() / 255.0 
     X_test = torch.from_numpy(X_test).permute(0, 3, 1, 2).float() / 255.0
 
+    # Add normalization (channel-wise)
+    mean = X_train.mean(dim=(0, 2, 3), keepdim=True)
+    std = X_train.std(dim=(0, 2, 3), keepdim=True)
+
+    # Apply to both train and test
+    X_train = (X_train - mean) / std
+    X_test = (X_test - mean) / std
+
     # Squeeze the labels so its [500] instead of [500, 1], also convert it to an int
     y_train = torch.from_numpy(y_train).squeeze().long()
     y_test = torch.from_numpy(y_test).squeeze().long()
 
-    return X_train, y_train, X_test, y_test
+    print("Train label distribution:", torch.bincount(y_train))
+    print("Test label distribution:", torch.bincount(y_test))
+
+    train_set = DataLoader(TensorDataset(X_train, y_train), batch_size=32, shuffle=True, generator=g)
+    test_set = DataLoader(TensorDataset(X_test, y_test), batch_size=32)
+
+    
+
+    return train_set, test_set
 
 if __name__ == "__main__":
-    X_train, y_train, X_test, y_test = load_pcam_subset(train_size=500, test_size=500)
-    print("Train:", X_train.shape, y_train.shape)
-    print("Test: ", X_test.shape, y_test.shape)
+    train_set, test_set = load_pcam_subset(train_size=100, test_size=100, data_dir=r"D:\GCNN\G-CNN-P5\data\raw")
+
+    # find device
+    device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
+
+    # setup model to use device (important)
+    # model.to(device)
+    for X_batch, y_batch in train_set:
+        print(X_batch.shape, y_batch.shape)
+        # when training and testing, make sure data is sent to device
+        X_batch, y_batch = X_batch.to(device), y_batch.to(device)
+        break
+
+    for X_batch, y_batch in test_set:
+        print(X_batch.shape, y_batch.shape)
+        break
 
