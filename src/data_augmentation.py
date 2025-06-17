@@ -1,8 +1,16 @@
 import os
+import random
+import numpy as np
 import torch
 from torch.utils.data import TensorDataset, DataLoader
 import torchvision.transforms.functional as TF
 
+# Set seeds for reproducibility
+torch.manual_seed(42)
+np.random.seed(42)
+random.seed(42)
+torch.backends.cudnn.deterministic = True
+torch.backends.cudnn.benchmark = False
 
 def translate_data(dataloader_set, translate=(5, 5)):
     device = next(iter(dataloader_set))[0].device
@@ -16,7 +24,6 @@ def translate_data(dataloader_set, translate=(5, 5)):
     labels = torch.stack(labels).to(device)
     return DataLoader(TensorDataset(imgs, labels), batch_size=dataloader_set.batch_size, shuffle=True)
 
-
 def rotate_data(dataloader_set, angle=30):
     device = next(iter(dataloader_set))[0].device
     imgs, labels = [], []
@@ -28,7 +35,6 @@ def rotate_data(dataloader_set, angle=30):
     imgs = torch.stack(imgs).to(device)
     labels = torch.stack(labels).to(device)
     return DataLoader(TensorDataset(imgs, labels), batch_size=dataloader_set.batch_size, shuffle=True)
-
 
 def symmetri_data(dataloader_set, horizontal=True, vertical=False):
     device = next(iter(dataloader_set))[0].device
@@ -46,20 +52,30 @@ def symmetri_data(dataloader_set, horizontal=True, vertical=False):
     labels = torch.stack(labels).to(device)
     return DataLoader(TensorDataset(imgs, labels), batch_size=dataloader_set.batch_size, shuffle=True)
 
+def combine_multiple_augmentations(loader, transform_fns):
+    device = next(iter(loader))[0].device
+    imgs, labels = [], []
+    for X_batch, y_batch in loader:
+        for img, label in zip(X_batch, y_batch):
+            imgs.append(img)
+            labels.append(label)
+            for fn in transform_fns:
+                imgs.append(fn(img))
+                labels.append(label)
+    all_imgs = torch.stack(imgs).to(device)
+    all_labels = torch.stack(labels).to(device)
+    return DataLoader(TensorDataset(all_imgs, all_labels), batch_size=loader.batch_size, shuffle=True)
 
 if __name__ == "__main__":
-    # Determine project root and data directory relative to this script
     base_dir = os.path.dirname(__file__)
     data_dir = os.path.abspath(os.path.join(base_dir, '..', 'data', 'raw'))
 
-    # Import PCAM loader with resolved path
     from data import load_pcam_subset
 
-    # Load a small subset for quick testing
     try:
         train_loader, _ = load_pcam_subset(
-            train_size=16,
-            test_size=0,
+            train_size=32,
+            test_size=10,
             data_dir=data_dir,
             seed=42
         )
@@ -67,17 +83,13 @@ if __name__ == "__main__":
         print(f"Error loading PCAM data: {e}\nPlease check that '{data_dir}' contains the .h5 files.")
         exit(1)
 
-    # Test translate_data
-    translated_loader = translate_data(train_loader, translate=(10, 10))
-    X_t, y_t = next(iter(translated_loader))
-    print(f"Translated batch shapes: images {X_t.shape}, labels {y_t.shape}")
+    transforms = [
+        lambda img: TF.affine(img, angle=0, translate=(10, 10), scale=1.0, shear=(0.0, 0.0)),
+        lambda img: TF.rotate(img, angle=45),
+        lambda img: TF.hflip(TF.vflip(img))
+    ]
 
-    # Test rotate_data
-    rotated_loader = rotate_data(train_loader, angle=45)
-    X_r, y_r = next(iter(rotated_loader))
-    print(f"Rotated batch shapes: images {X_r.shape}, labels {y_r.shape}")
+    extended_loader = combine_multiple_augmentations(train_loader, transforms)
 
-    # Test symmetri_data (horizontal & vertical flips)
-    flipped_loader = symmetri_data(train_loader, horizontal=True, vertical=True)
-    X_s, y_s = next(iter(flipped_loader))
-    print(f"Flipped batch shapes: images {X_s.shape}, labels {y_s.shape}")
+    X_ext, y_ext = next(iter(extended_loader))
+    print(f"Extended batch shapes: images {X_ext.shape}, labels {y_ext.shape}")
