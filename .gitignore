@@ -1,2 +1,8 @@
-.devcontainer
-data/
+# Ignorerer .devcontainer-mappen
+/.devcontainer/
+
+# Ignorerer data-mappen
+/data/
+
+# Ignorerer test-env-mappen
+/test-env/
