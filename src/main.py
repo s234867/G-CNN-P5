@@ -297,7 +297,7 @@ for OPTIMIZER in OPTIMIZERZ:
                     # DIHEDRAL
                     gcnn_model, gcnn_results = train_model(
                         model_name="GCNN",
-                        name=cyclic_name,
+                        name=dihedral_name,
                         model_hparams={"in_channels": IN_CHANNELS, 
                                     "out_channels": OUT_CHANNELS, 
                                     "kernel_size": KERNEL_SIZE, 
@@ -306,7 +306,7 @@ for OPTIMIZER in OPTIMIZERZ:
                                         "group":dihedral_group},
                         optimizer_name=OPTIMIZER,
                         optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
-                        save_name=f"gcnn-cyclic-pretrained-{SEED}",
+                        save_name=f"gcnn-dihedral-pretrained-{SEED}",
                         train_loader=train_loader,
                         test_loader=test_loader,
                         n_epochs=N_EPOCHS
