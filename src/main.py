@@ -175,8 +175,6 @@ BASE_GROUP_ORDER = 4
 cyclic_group = CyclicGroup(n=BASE_GROUP_ORDER).to(device)
 num_elements = cyclic_group.elements().numel()
 HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
-print(HIDDEN_CHANNELS)
-input()
 
 # TRAINING STUFF
 SEEDS = [42, 15, 67, 1312, 8]
