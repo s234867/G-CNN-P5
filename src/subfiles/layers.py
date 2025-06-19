@@ -46,7 +46,7 @@ class LiftingConv2d(nn.Module):
             group=group
         )
 
-        self.padding = padding
+        self.padding = kernel_size//2
         self.padding_mode = padding_mode
         self.stride = stride
         self.num_group_elements = group.elements().shape[0]
@@ -120,7 +120,7 @@ class GroupConv2d(nn.Module):
             group=group
         )
 
-        self.padding = padding
+        self.padding = kernel_size//2
         self.padding_mode = padding_mode
         self.stride = stride
         self.num_group_elements = group.elements().shape[0]
