@@ -52,19 +52,41 @@ def symmetri_data(dataloader_set, horizontal=True, vertical=False):
     labels = torch.stack(labels).to(device)
     return DataLoader(TensorDataset(imgs, labels), batch_size=dataloader_set.batch_size, shuffle=True)
 
-def combine_multiple_augmentations(loader, transform_fns):
+def combine_multiple_augmentations(loader, transform_fns, extend=True):
     device = next(iter(loader))[0].device
-    imgs, labels = [], []
+    batch_size = loader.batch_size
+    original_imgs, original_labels = [], []
+
     for X_batch, y_batch in loader:
         for img, label in zip(X_batch, y_batch):
-            imgs.append(img)
-            labels.append(label)
-            for fn in transform_fns:
-                imgs.append(fn(img))
-                labels.append(label)
-    all_imgs = torch.stack(imgs).to(device)
-    all_labels = torch.stack(labels).to(device)
-    return DataLoader(TensorDataset(all_imgs, all_labels), batch_size=loader.batch_size, shuffle=True)
+            original_imgs.append(img)
+            original_labels.append(label)
+
+    # the good agumentations
+    augmented_imgs, augmented_labels = [], []
+    for img, label in zip(original_imgs, original_labels):
+        for fn in transform_fns:
+            augmented_imgs.append(fn(img))
+            augmented_labels.append(label)
+
+    # combine the data
+    all_imgs = original_imgs + augmented_imgs
+    all_labels = original_labels + augmented_labels
+
+    if not extend:
+        # we randomly sample to keep same size of dataset
+        idx = torch.randperm(len(all_imgs))[:len(original_imgs)]
+        all_imgs = [all_imgs[i] for i in idx]
+        all_labels = [all_labels[i] for i in idx]
+
+    # do conversions back and return the augmented dataset
+    all_imgs = torch.stack(all_imgs).to(device)
+    all_labels = torch.tensor(all_labels).to(device)
+
+    return DataLoader(TensorDataset(all_imgs, all_labels), batch_size=batch_size, shuffle=True)
+
+
+
 
 if __name__ == "__main__":
     base_dir = os.path.dirname(__file__)
