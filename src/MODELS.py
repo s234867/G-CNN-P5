@@ -29,11 +29,12 @@ class GECNN(nn.Module):
             kernel_size: int,
             num_hidden: int,
             hidden_channels: int,
+            padding: int=None,
             group: Group,
             bias: bool=True
         ) -> None:
         super().__init__()
-        padding=kernel_size // 2
+        padding = kernel_size // 2 if padding == None else padding
 
         # Lifting convolution layer
         self.lifting_conv = LiftingConv2d(
@@ -48,7 +49,7 @@ class GECNN(nn.Module):
         # Set of group convolutions
         self.gconvs = nn.ModuleList()
 
-        for i in range(num_hidden):
+        for _ in range(num_hidden):
             self.gconvs.append(
                 GroupConv2d(
                     in_channels=hidden_channels,
@@ -101,11 +102,11 @@ class CNN(nn.Module):
             kernel_size: int,
             num_hidden: int,
             hidden_channels: int,
-            bias: bool = True, # keep it disabled to make a fair comparison
+            padding: int=None,
+            bias: bool = True,
         ) -> None:
         super().__init__()
-
-        padding=kernel_size // 2
+        padding = kernel_size // 2 if padding == None else padding
 
         self.first_conv = nn.Conv2d(
             in_channels=in_channels,
@@ -116,7 +117,7 @@ class CNN(nn.Module):
         )
 
         self.convs = nn.ModuleList()
-        for i in range(num_hidden):
+        for _ in range(num_hidden):
             self.convs.append(
                 nn.Conv2d(
                     in_channels=hidden_channels,
