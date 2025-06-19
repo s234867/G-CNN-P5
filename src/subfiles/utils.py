@@ -1,36 +1,43 @@
-## subfiles/utils.py ##
-
 # PyTorch
 import torch
 import torch.nn.functional as F
 
 
-# To interpolate pixel values when rotating in the interpolative lifting kernel
+
 def bilinear_interpolation(signal, grid):
     """
-    Perform bilinear interpolation using grid_sample.
+    Batched bilinear interpolation using torch.grid_sample.
 
-    @param signal: Tensor [C, H, W] or [B, C, H, W]
-    @param grid: Tensor [2, H, W] or [B, 2, H, W]
-    @returns: Interpolated tensor [B, C, H, W]
+    Args:
+        signal: Tensor of shape [C, H, W] or [N, C, H, W]
+        grid: Tensor of shape [2, N, H, W] (coords XY)
+
+    Returns:
+        Interpolated tensor: [N, C, H, W]
     """
-    if signal.ndim == 3:
+    if signal.dim() == 3:
         signal = signal.unsqueeze(0)  # [1, C, H, W]
-    if grid.ndim == 3:
-        grid = grid.unsqueeze(0)  # [1, 2, H, W]
 
-    # Convert to [B, H, W, 2] format (YX order)
-    grid = grid.permute(0, 2, 3, 1)  # [B, H, W, 2]
-    grid = torch.roll(grid, shifts=1, dims=-1)  # Swap X ↔ Y
+    if grid.dim() == 3:
+        grid = grid.unsqueeze(1)  # [2, 1, H, W]
+
+    # grid_sample expects grid shape [N, H, W, 2]
+    grid = grid.permute(1, 2, 3, 0)  # [N, H, W, 2]
+
+    # grid_sample expects YX coords, but you have XY, so swap last dim
+    grid = torch.roll(grid, shifts=1, dims=-1)
+
+    # Now expand signal batch dimension to match grid batch size N
+    if signal.size(0) == 1 and grid.size(0) > 1:
+        signal = signal.expand(grid.size(0), -1, -1, -1)
 
     return F.grid_sample(
         input=signal,
         grid=grid,
-        mode="bilinear",
-        padding_mode="zeros",
+        mode='bilinear',
+        padding_mode='zeros',
         align_corners=True
     )
-
 
 
 # Interpolate pixel values in the group convolution kernel
