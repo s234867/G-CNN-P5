@@ -143,7 +143,7 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
 
 # Define training augmentations
 transforms = [
-    lambda img: TF.affine(img, angle=0, translate=(10, 10), scale=1.0, shear=(0.0, 0.0)),
+    lambda img: TF.affine(img, angle=0, translate=(10, 10), scale=1.0),
     lambda img: TF.rotate(img, angle=45),
     lambda img: TF.hflip(TF.vflip(img))
 ]
@@ -157,7 +157,7 @@ IN_CHANNELS = 3
 OUT_CHANNELS = 2
 OPTIMIZERZ = ["Adam", "AdamW"]
 LRs = [1e-4, 1e-3, 1e-2]
-WEIGHT_DECAYS = [0.0, 1e-5, 1e-4]
+WEIGHT_DECAYS = [0.0, 1e-4]
 KERNEL_SIZE = 5
 
 # CNN
@@ -170,17 +170,17 @@ STEERABLE_NUM_HIDDEN = 4
 
 # GCNN
 GCNN_NUM_HIDDEN = 4
-GCNN_GROUP_ORDERS = [4, 8, 16]
+GCNN_GROUP_ORDERS = [4]#, 8, 16]
 BASE_GROUP_ORDER = 4
 cyclic_group = CyclicGroup(n=BASE_GROUP_ORDER).to(device)
 num_elements = cyclic_group.elements().numel()
 HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
 
 # TRAINING STUFF
-SEEDS = [42, 15, 67, 1312, 8]
-N_TRAIN = 250
-N_TEST = 250
-N_EPOCHS = 5
+SEEDS = [42]#, 15, 67, 1312, 8]
+N_TRAIN = 1000
+N_TEST = 500
+N_EPOCHS = 10
 
 start_time = time.time()
 for OPTIMIZER in OPTIMIZERZ:
@@ -221,7 +221,7 @@ for OPTIMIZER in OPTIMIZERZ:
                 results["CNN"].append(cnn_results)
 
 
-
+                """
                 # CNN data augment
                 cnn_model, cnn_results = train_model(
                     model_name="CNN",
@@ -238,7 +238,7 @@ for OPTIMIZER in OPTIMIZERZ:
                     )
                 # save results
                 results["CNN_augmented"].append(cnn_results)
-
+                """
 
                 # Steerable
                 steerablegcnn_model, steerablegcnn_results = train_model(
