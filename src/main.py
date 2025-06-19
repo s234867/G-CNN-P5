@@ -190,7 +190,7 @@ GCNN_DIHEDRAL_WEIGHT_DECAY = 0.0
 
 # TRAINING STUFF
 SEEDS = [42, 15, 67, 1312, 8]
-N_TRAIN = 32768
+N_TRAIN = 20000
 N_TEST = 10000
 N_EPOCHS = 30
 
@@ -221,7 +221,7 @@ for SEED in SEEDS:
                     "hidden_channels": CNN_HIDDEN_CHANNELS},
         optimizer_name=CNN_OPTIMIZER,
         optimizer_hparams={"lr": CNN_LR, "weight_decay": CNN_WEIGHT_DECAY},
-        save_name=f"cnn-pretrained-{SEED}",
+        save_name=f"{run_name}-pretrained",
         train_loader=train_loader,
         test_loader=test_loader,
         n_epochs=N_EPOCHS
@@ -239,7 +239,7 @@ for SEED in SEEDS:
                     "hidden_channels": CNN_HIDDEN_CHANNELS},
         optimizer_name=CNN_OPTIMIZER,
         optimizer_hparams={"lr": CNN_LR, "weight_decay": CNN_WEIGHT_DECAY},
-        save_name=f"cnn-augmented-pretrained-{SEED}",
+        save_name=f"{run_name}-pretrained",
         train_loader=train_loader_augmented,
         test_loader=test_loader,
         n_epochs=N_EPOCHS
@@ -261,7 +261,7 @@ for SEED in SEEDS:
         },
         optimizer_name=STEERABLE_OPTIMIZER,
         optimizer_hparams={"lr": STEERABLE_LR, "weight_decay": STEERABLE_WEIGHT_DECAY},
-        save_name=f"steerable-gcnn-pretrained-{SEED}",
+        save_name=f"{run_name}-pretrained",
         train_loader=train_loader,
         test_loader=test_loader,
         n_epochs=N_EPOCHS
@@ -292,7 +292,7 @@ for SEED in SEEDS:
                         "group":cyclic_group},
             optimizer_name=GCNN_CYCLIC_OPTIMIZER,
             optimizer_hparams={"lr": GCNN_CYCLIC_LR, "weight_decay": GCNN_CYCLIC_WEIGHT_DECAY},
-            save_name=f"gcnn-cyclic-pretrained-{SEED}",
+            save_name=f"{cyclic_name}-pretrained",
             train_loader=train_loader,
             test_loader=test_loader,
             n_epochs=N_EPOCHS
@@ -312,7 +312,7 @@ for SEED in SEEDS:
                             "group":dihedral_group},
             optimizer_name=GCNN_DIHEDRAL_OPTIMIZER,
             optimizer_hparams={"lr": GCNN_DIHEDRAL_LR, "weight_decay": GCNN_DIHEDRAL_WEIGHT_DECAY},
-            save_name=f"gcnn-dihedral-pretrained-{SEED}",
+            save_name=f"{dihedral_name}-pretrained",
             train_loader=train_loader,
             test_loader=test_loader,
             n_epochs=N_EPOCHS
