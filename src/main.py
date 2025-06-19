@@ -59,10 +59,12 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
         'test_loss': [],
         'test_acc': [],
         'f1': [],
-        'auroc': []
+        'auroc': [],
+        'epoch_time': []
     }
 
     for epoch in range(1, n_epochs+1):
+        epoch_start = time.time()
         model.train()
         correct, total, loss_sum = 0, 0, 0
         for x, y in train_loader:
@@ -118,6 +120,7 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
         history['test_acc'].append(test_acc)
         history['f1'].append(f1)
         history['auroc'].append(auroc)
+        history['epoch_time'].append(round(epoch_start-time.time(), 2))
 
         logging.info(
             f"Epoch {epoch}: {name} | "
@@ -152,9 +155,9 @@ device = torch.device('cuda' if torch.cuda.is_available() else 'cpu')
 # GENERAL
 IN_CHANNELS = 3
 OUT_CHANNELS = 2
-OPTIMIZER = "Adam"
-LR = 1e-3
-WEIGHT_DECAY = 1e-4
+OPTIMIZERZ = ["Adam", "AdamW"]
+LRs = [1e-4, 1e-3, 1e-2]
+WEIGHT_DECAYS = [0.0, 1e-5, 1e-4]
 KERNEL_SIZE = 5
 
 # CNN
@@ -172,165 +175,169 @@ BASE_GROUP_ORDER = 4
 cyclic_group = CyclicGroup(n=BASE_GROUP_ORDER).to(device)
 num_elements = cyclic_group.elements().numel()
 HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
+print(HIDDEN_CHANNELS)
+input()
 
 # TRAINING STUFF
-SEEDS = [42, 15, 67]
-N_TRAIN = 10000
-N_TEST = 2000
+SEEDS = [42, 15, 67, 1312, 8]
+N_TRAIN = 250
+N_TEST = 250
 N_EPOCHS = 5
 
 start_time = time.time()
+for OPTIMIZER in OPTIMIZERZ:
+    for LR in LRs:
+        for WEIGHT_DECAY in WEIGHT_DECAYS:
+            print("DOING:", OPTIMIZER, LR, WEIGHT_DECAY)
+            for SEED in SEEDS:
+                logging.info(f"\n==================== SEED {SEED} ====================")
+                torch.manual_seed(SEED)
+                np.random.seed(SEED)
+                random.seed(SEED)
 
-for SEED in SEEDS:
-    logging.info(f"\n==================== SEED {SEED} ====================")
-    torch.manual_seed(SEED)
-    np.random.seed(SEED)
-    random.seed(SEED)
+                
+                train_loader = None
+                test_loader = None
 
-    
-    train_loader = None
-    test_loader = None
+                # Data Loader
+                train_loader, test_loader = load_pcam_subset(N_TRAIN, N_TEST, r"./data/raw/", batch_size=32, seed=SEED)
 
-    # Data Loader
-    train_loader, test_loader = load_pcam_subset(N_TRAIN, N_TEST, r"./data/raw/", batch_size=64, seed=SEED)
+                train_loader_augmented = combine_multiple_augmentations(train_loader, transforms, extend=False)
 
-    train_loader_augmented = combine_multiple_augmentations(train_loader, transforms, extend=False)
-
-    ## MODELS
-    # CNN
-    cnn_model, cnn_results = train_model(
-        model_name="CNN",
-        name="CNN",
-        model_hparams={"in_channels": IN_CHANNELS, "out_channels": OUT_CHANNELS, 
-                    "kernel_size": KERNEL_SIZE, "num_hidden": CNN_NUM_HIDDEN, 
-                    "hidden_channels": CNN_HIDDEN_CHANNELS},
-        optimizer_name=OPTIMIZER,
-        optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
-        save_name=f"cnn-pretrained-{SEED}",
-        train_loader=train_loader,
-        test_loader=test_loader,
-        n_epochs=N_EPOCHS
-        )
-    # save results
-    results["CNN"].append(cnn_results)
-
-
-
-    # CNN data augment
-    cnn_model, cnn_results = train_model(
-        model_name="CNN",
-        name="CNN-augmented",
-        model_hparams={"in_channels": IN_CHANNELS, "out_channels": OUT_CHANNELS, 
-                    "kernel_size": KERNEL_SIZE, "num_hidden": CNN_NUM_HIDDEN, 
-                    "hidden_channels": CNN_HIDDEN_CHANNELS},
-        optimizer_name=OPTIMIZER,
-        optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
-        save_name=f"cnn-augmented-pretrained-{SEED}",
-        train_loader=train_loader_augmented,
-        test_loader=test_loader,
-        n_epochs=N_EPOCHS
-        )
-    # save results
-    results["CNN_augmented"].append(cnn_results)
+                ## MODELS
+                # CNN
+                cnn_model, cnn_results = train_model(
+                    model_name="CNN",
+                    name="CNN",
+                    model_hparams={"in_channels": IN_CHANNELS, "out_channels": OUT_CHANNELS, 
+                                "kernel_size": KERNEL_SIZE, "num_hidden": CNN_NUM_HIDDEN, 
+                                "hidden_channels": CNN_HIDDEN_CHANNELS},
+                    optimizer_name=OPTIMIZER,
+                    optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
+                    save_name=f"cnn-pretrained-{SEED}",
+                    train_loader=train_loader,
+                    test_loader=test_loader,
+                    n_epochs=N_EPOCHS
+                    )
+                # save results
+                results["CNN"].append(cnn_results)
 
 
-    # Steerable
-    steerablegcnn_model, steerablegcnn_results = train_model(
-        model_name="SteerableGCNN",
-        name="SteerableGCNN",
-        model_hparams={
-            "in_channels": IN_CHANNELS,
-            "out_channels": OUT_CHANNELS,
-            "kernel_size": KERNEL_SIZE,
-            "num_hidden": STEERABLE_NUM_HIDDEN,
-            "hidden_channels": HIDDEN_CHANNELS
-        },
-        optimizer_name=OPTIMIZER,
-        optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
-        save_name=f"steerable-gcnn-pretrained-{SEED}",
-        train_loader=train_loader,
-        test_loader=test_loader,
-        n_epochs=N_EPOCHS
-        )
-    # save results
-    results["SteerableGCNN"].append(steerablegcnn_results)
 
-    
+                # CNN data augment
+                cnn_model, cnn_results = train_model(
+                    model_name="CNN",
+                    name="CNN-augmented",
+                    model_hparams={"in_channels": IN_CHANNELS, "out_channels": OUT_CHANNELS, 
+                                "kernel_size": KERNEL_SIZE, "num_hidden": CNN_NUM_HIDDEN, 
+                                "hidden_channels": CNN_HIDDEN_CHANNELS},
+                    optimizer_name=OPTIMIZER,
+                    optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
+                    save_name=f"cnn-augmented-pretrained-{SEED}",
+                    train_loader=train_loader_augmented,
+                    test_loader=test_loader,
+                    n_epochs=N_EPOCHS
+                    )
+                # save results
+                results["CNN_augmented"].append(cnn_results)
 
-    for order in GCNN_GROUP_ORDERS:
-        # GCNN
-        cyclic_name = "GCNN_CYCLIC_" + str(order)
-        cyclic_group = CyclicGroup(n=order).to(device)
 
-        dihedral_name = "GCNN_DIHEDRAL_" + str(order)
-        dihedral_group = DihedralGroup(n=order).to(device)
+                # Steerable
+                steerablegcnn_model, steerablegcnn_results = train_model(
+                    model_name="SteerableGCNN",
+                    name="SteerableGCNN",
+                    model_hparams={
+                        "in_channels": IN_CHANNELS,
+                        "out_channels": OUT_CHANNELS,
+                        "kernel_size": KERNEL_SIZE,
+                        "num_hidden": STEERABLE_NUM_HIDDEN,
+                        "hidden_channels": HIDDEN_CHANNELS
+                    },
+                    optimizer_name=OPTIMIZER,
+                    optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
+                    save_name=f"steerable-gcnn-pretrained-{SEED}",
+                    train_loader=train_loader,
+                    test_loader=test_loader,
+                    n_epochs=N_EPOCHS
+                    )
+                # save results
+                results["SteerableGCNN"].append(steerablegcnn_results)
 
-        num_elements = cyclic_group.elements().numel()
-        HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
+                
 
-        # CYCLIC
-        gcnn_model, gcnn_results = train_model(
-            model_name="GCNN",
-            name=cyclic_name,
-            model_hparams={"in_channels": IN_CHANNELS, 
-                        "out_channels": OUT_CHANNELS, 
-                        "kernel_size": KERNEL_SIZE, 
-                        "num_hidden": GCNN_NUM_HIDDEN,
-                        "hidden_channels": HIDDEN_CHANNELS, 
-                        "group":cyclic_group},
-            optimizer_name=OPTIMIZER,
-            optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
-            save_name=f"gcnn-cyclic-pretrained-{SEED}",
-            train_loader=train_loader,
-            test_loader=test_loader,
-            n_epochs=N_EPOCHS
-            )
-        # save results
-        results[cyclic_name].append(gcnn_results)
+                for order in GCNN_GROUP_ORDERS:
+                    # GCNN
+                    cyclic_name = "GCNN_CYCLIC_" + str(order)
+                    cyclic_group = CyclicGroup(n=order).to(device)
 
-        if 0:
-            # DIHEDRAL
-            gcnn_model, gcnn_results = train_model(
-                model_name="GCNN",
-                name=cyclic_name,
-                model_hparams={"in_channels": IN_CHANNELS, 
-                            "out_channels": OUT_CHANNELS, 
-                            "kernel_size": KERNEL_SIZE, 
-                            "num_hidden": GCNN_NUM_HIDDEN,
-                                "hidden_channels": HIDDEN_CHANNELS, 
-                                "group":dihedral_group},
-                optimizer_name=OPTIMIZER,
-                optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
-                save_name=f"gcnn-cyclic-pretrained-{SEED}",
-                train_loader=train_loader,
-                test_loader=test_loader,
-                n_epochs=N_EPOCHS
+                    dihedral_name = "GCNN_DIHEDRAL_" + str(order)
+                    dihedral_group = DihedralGroup(n=order).to(device)
+
+                    num_elements = cyclic_group.elements().numel()
+                    HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
+
+                    # CYCLIC
+                    gcnn_model, gcnn_results = train_model(
+                        model_name="GCNN",
+                        name=cyclic_name,
+                        model_hparams={"in_channels": IN_CHANNELS, 
+                                    "out_channels": OUT_CHANNELS, 
+                                    "kernel_size": KERNEL_SIZE, 
+                                    "num_hidden": GCNN_NUM_HIDDEN,
+                                    "hidden_channels": HIDDEN_CHANNELS, 
+                                    "group":cyclic_group},
+                        optimizer_name=OPTIMIZER,
+                        optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
+                        save_name=f"gcnn-cyclic-pretrained-{SEED}",
+                        train_loader=train_loader,
+                        test_loader=test_loader,
+                        n_epochs=N_EPOCHS
+                        )
+                    # save results
+                    results[cyclic_name].append(gcnn_results)
+
+                    # DIHEDRAL
+                    gcnn_model, gcnn_results = train_model(
+                        model_name="GCNN",
+                        name=cyclic_name,
+                        model_hparams={"in_channels": IN_CHANNELS, 
+                                    "out_channels": OUT_CHANNELS, 
+                                    "kernel_size": KERNEL_SIZE, 
+                                    "num_hidden": GCNN_NUM_HIDDEN,
+                                        "hidden_channels": HIDDEN_CHANNELS, 
+                                        "group":dihedral_group},
+                        optimizer_name=OPTIMIZER,
+                        optimizer_hparams={"lr": LR, "weight_decay": WEIGHT_DECAY},
+                        save_name=f"gcnn-cyclic-pretrained-{SEED}",
+                        train_loader=train_loader,
+                        test_loader=test_loader,
+                        n_epochs=N_EPOCHS
+                        )
+                    # save results
+                    results[dihedral_name].append(gcnn_results)
+
+            end_time = time.time()
+
+            took = end_time - start_time
+            logging.info(f"Done in {took:.2f} seconds")
+
+            import statistics
+
+            logging.info("\n===== RESULTS SUMMARY =====")
+
+            for model_name, histories in results.items():
+                f1_scores = [max(h["f1"]) for h in histories]
+                aurocs = [h["auroc"][np.argmax(h["f1"])] for h in histories]  # AUROC at best-F1 epoch
+
+                f1_mean = statistics.mean(f1_scores)
+                f1_std = statistics.stdev(f1_scores) if len(f1_scores) > 1 else 0.0
+                auroc_mean = statistics.mean(aurocs)
+                auroc_std = statistics.stdev(aurocs) if len(aurocs) > 1 else 0.0
+
+                logging.info(
+                    f"{model_name} | "
+                    f"F1: {f1_mean:.4f} ± {f1_std:.4f} | "
+                    f"AUROC: {auroc_mean:.4f} ± {auroc_std:.4f}"
                 )
-            # save results
-            results[dihedral_name].append(gcnn_results)
-
-end_time = time.time()
-
-took = end_time - start_time
-logging.info(f"Done in {took:.2f} seconds")
-
-import statistics
-
-logging.info("\n===== RESULTS SUMMARY =====")
-
-for model_name, histories in results.items():
-    f1_scores = [max(h["f1"]) for h in histories]
-    aurocs = [h["auroc"][np.argmax(h["f1"])] for h in histories]  # AUROC at best-F1 epoch
-
-    f1_mean = statistics.mean(f1_scores)
-    f1_std = statistics.stdev(f1_scores) if len(f1_scores) > 1 else 0.0
-    auroc_mean = statistics.mean(aurocs)
-    auroc_std = statistics.stdev(aurocs) if len(aurocs) > 1 else 0.0
-
-    logging.info(
-        f"{model_name} | "
-        f"F1: {f1_mean:.4f} ± {f1_std:.4f} | "
-        f"AUROC: {auroc_mean:.4f} ± {auroc_std:.4f}"
-    )
 
 save_results(results, SEEDS)
