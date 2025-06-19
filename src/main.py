@@ -120,7 +120,7 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
         history['test_acc'].append(test_acc)
         history['f1'].append(f1)
         history['auroc'].append(auroc)
-        history['epoch_time'].append(round(epoch_start-time.time(), 2))
+        history['epoch_time'].append(round(time.time()-epoch_start, 2))
 
         logging.info(
             f"Epoch {epoch}: {name} | "
@@ -143,7 +143,7 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
 
 # Define training augmentations
 transforms = [
-    lambda img: TF.affine(img, angle=0, translate=(10, 10), scale=1.0),
+    lambda img: TF.affine(img, angle=0, translate=(10, 10), scale=1.0, shear=(0,0)),
     lambda img: TF.rotate(img, angle=45),
     lambda img: TF.hflip(TF.vflip(img))
 ]
@@ -183,30 +183,32 @@ N_TEST = 500
 N_EPOCHS = 10
 
 start_time = time.time()
-for OPTIMIZER in OPTIMIZERZ:
-    for LR in LRs:
-        for WEIGHT_DECAY in WEIGHT_DECAYS:
-            print("DOING:", OPTIMIZER, LR, WEIGHT_DECAY)
-            for SEED in SEEDS:
-                logging.info(f"\n==================== SEED {SEED} ====================")
-                torch.manual_seed(SEED)
-                np.random.seed(SEED)
-                random.seed(SEED)
 
-                
-                train_loader = None
-                test_loader = None
+for SEED in SEEDS:
+    logging.info(f"\n==================== SEED {SEED} ====================")
+    torch.manual_seed(SEED)
+    np.random.seed(SEED)
+    random.seed(SEED)
 
-                # Data Loader
-                train_loader, test_loader = load_pcam_subset(N_TRAIN, N_TEST, r"./data/raw/", batch_size=32, seed=SEED)
+    
+    train_loader = None
+    test_loader = None
 
-                train_loader_augmented = combine_multiple_augmentations(train_loader, transforms, extend=False)
+    # Data Loader
+    train_loader, test_loader = load_pcam_subset(N_TRAIN, N_TEST, r"./data/raw/", batch_size=32, seed=SEED)
+
+    train_loader_augmented = combine_multiple_augmentations(train_loader, transforms, extend=False)
+    for OPTIMIZER in OPTIMIZERZ:
+        for LR in LRs:
+            for WEIGHT_DECAY in WEIGHT_DECAYS:
+                print("DOING:", OPTIMIZER, LR, WEIGHT_DECAY)
 
                 ## MODELS
                 # CNN
+                run_name = f"CNN_{OPTIMIZER}_lr{LR}_wd{WEIGHT_DECAY}"
                 cnn_model, cnn_results = train_model(
                     model_name="CNN",
-                    name="CNN",
+                    name=run_name,
                     model_hparams={"in_channels": IN_CHANNELS, "out_channels": OUT_CHANNELS, 
                                 "kernel_size": KERNEL_SIZE, "num_hidden": CNN_NUM_HIDDEN, 
                                 "hidden_channels": CNN_HIDDEN_CHANNELS},
@@ -218,14 +220,15 @@ for OPTIMIZER in OPTIMIZERZ:
                     n_epochs=N_EPOCHS
                     )
                 # save results
-                results["CNN"].append(cnn_results)
+                results[run_name].append({"seed": SEED, "history": cnn_results})
 
 
                 """
                 # CNN data augment
+                run_name = f"CNN-augmented_{OPTIMIZER}_lr{LR}_wd{WEIGHT_DECAY}"
                 cnn_model, cnn_results = train_model(
                     model_name="CNN",
-                    name="CNN-augmented",
+                    name=run_name,
                     model_hparams={"in_channels": IN_CHANNELS, "out_channels": OUT_CHANNELS, 
                                 "kernel_size": KERNEL_SIZE, "num_hidden": CNN_NUM_HIDDEN, 
                                 "hidden_channels": CNN_HIDDEN_CHANNELS},
@@ -237,13 +240,14 @@ for OPTIMIZER in OPTIMIZERZ:
                     n_epochs=N_EPOCHS
                     )
                 # save results
-                results["CNN_augmented"].append(cnn_results)
+                results[run_name].append({"seed": SEED, "history": cnn_results})
                 """
 
                 # Steerable
+                run_name = f"SteerableGCNN_{OPTIMIZER}_lr{LR}_wd{WEIGHT_DECAY}"
                 steerablegcnn_model, steerablegcnn_results = train_model(
                     model_name="SteerableGCNN",
-                    name="SteerableGCNN",
+                    name=run_name,
                     model_hparams={
                         "in_channels": IN_CHANNELS,
                         "out_channels": OUT_CHANNELS,
@@ -259,16 +263,15 @@ for OPTIMIZER in OPTIMIZERZ:
                     n_epochs=N_EPOCHS
                     )
                 # save results
-                results["SteerableGCNN"].append(steerablegcnn_results)
-
+                results[run_name].append({"seed": SEED, "history": steerablegcnn_results})
                 
 
                 for order in GCNN_GROUP_ORDERS:
                     # GCNN
-                    cyclic_name = "GCNN_CYCLIC_" + str(order)
+                    cyclic_name = "GCNN_CYCLIC_" + str(order) + f"_{OPTIMIZER}_lr{LR}_wd{WEIGHT_DECAY}"
                     cyclic_group = CyclicGroup(n=order).to(device)
 
-                    dihedral_name = "GCNN_DIHEDRAL_" + str(order)
+                    dihedral_name = "GCNN_DIHEDRAL_" + str(order) + f"_{OPTIMIZER}_lr{LR}_wd{WEIGHT_DECAY}"
                     dihedral_group = DihedralGroup(n=order).to(device)
 
                     num_elements = cyclic_group.elements().numel()
@@ -292,7 +295,7 @@ for OPTIMIZER in OPTIMIZERZ:
                         n_epochs=N_EPOCHS
                         )
                     # save results
-                    results[cyclic_name].append(gcnn_results)
+                    results[cyclic_name].append({"seed": SEED, "history": gcnn_results})
 
                     # DIHEDRAL
                     gcnn_model, gcnn_results = train_model(
@@ -312,30 +315,31 @@ for OPTIMIZER in OPTIMIZERZ:
                         n_epochs=N_EPOCHS
                         )
                     # save results
-                    results[dihedral_name].append(gcnn_results)
+                    results[dihedral_name].append({"seed": SEED, "history": gcnn_results})
 
-            end_time = time.time()
+end_time = time.time()
 
-            took = end_time - start_time
-            logging.info(f"Done in {took:.2f} seconds")
+took = end_time - start_time
+logging.info(f"Done in {took:.2f} seconds")
 
-            import statistics
+import statistics
 
-            logging.info("\n===== RESULTS SUMMARY =====")
+logging.info("\n===== RESULTS SUMMARY =====")
 
-            for model_name, histories in results.items():
-                f1_scores = [max(h["f1"]) for h in histories]
-                aurocs = [h["auroc"][np.argmax(h["f1"])] for h in histories]  # AUROC at best-F1 epoch
+for model_name, histories in results.items():
+    f1_scores = [max(h["history"]["f1"]) for h in histories]
+    aurocs = [h["history"]["auroc"][np.argmax(h["history"]["f1"])] for h in histories]  # AUROC at best-F1 epoch
 
-                f1_mean = statistics.mean(f1_scores)
-                f1_std = statistics.stdev(f1_scores) if len(f1_scores) > 1 else 0.0
-                auroc_mean = statistics.mean(aurocs)
-                auroc_std = statistics.stdev(aurocs) if len(aurocs) > 1 else 0.0
+    f1_mean = statistics.mean(f1_scores)
+    f1_std = statistics.stdev(f1_scores) if len(f1_scores) > 1 else 0.0
+    auroc_mean = statistics.mean(aurocs)
+    auroc_std = statistics.stdev(aurocs) if len(aurocs) > 1 else 0.0
 
-                logging.info(
-                    f"{model_name} | "
-                    f"F1: {f1_mean:.4f} ± {f1_std:.4f} | "
-                    f"AUROC: {auroc_mean:.4f} ± {auroc_std:.4f}"
-                )
+    logging.info(
+        f"{model_name} | "
+        f"F1: {f1_mean:.4f} ± {f1_std:.4f} | "
+        f"AUROC: {auroc_mean:.4f} ± {auroc_std:.4f}"
+    )
 
-save_results(results, SEEDS)
+save_results(results)
+

@@ -29,8 +29,8 @@ class GECNN(nn.Module):
             kernel_size: int,
             num_hidden: int,
             hidden_channels: int,
-            padding: int=None,
             group: Group,
+            padding: int=None,
             bias: bool=True
         ) -> None:
         super().__init__()
