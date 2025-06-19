@@ -90,7 +90,7 @@ def load_pcam_subset(train_size, test_size, data_dir=r'./data/raw', seed=42, bat
     return train_set, test_set
 
 if __name__ == "__main__":
-    train_set, test_set = load_pcam_subset(train_size=100, test_size=100, data_dir=r"D:\GCNN\G-CNN-P5\data\raw")
+    train_set, test_set = load_pcam_subset(train_size=100, test_size=100, data_dir=r"/zhome/d1/3/206707/Desktop/G-CNN-P5/data/raw/")
 
     # find device
     device = torch.device("cuda" if torch.cuda.is_available() else "cpu")
