@@ -40,10 +40,6 @@ def check_files(data_dir="data/pcam") -> None:
 
     assert not missing_files, f"Missing files in {FULL_PATH}: {missing_files}"
 
-# Dataset
-train_dataset = torchvision.datasets.PCAM(root=data_dir, split="train", transform=train_transform, download=False)
-test_dataset = torchvision.datasets.PCAM(root=data_dir, split="test", transform=train_transform, download=False)
-validation_dataset = torchvision.datasets.PCAM(root=data_dir, split="val", transform=train_transform, download=False)
 
 
 # Normalize training data
@@ -64,6 +60,11 @@ test_transform = transforms.Compose([
     transforms.Normalize((0.5,), (0.5,))
 ])
 
+
+# Dataset
+train_dataset = torchvision.datasets.PCAM(root=data_dir, split="train", transform=train_transform, download=False)
+test_dataset = torchvision.datasets.PCAM(root=data_dir, split="test", transform=train_transform, download=False)
+validation_dataset = torchvision.datasets.PCAM(root=data_dir, split="val", transform=train_transform, download=False)
 
 ### Sampler
 train_samples = 1000
