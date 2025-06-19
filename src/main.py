@@ -175,8 +175,8 @@ HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
 
 # TRAINING STUFF
 SEEDS = [42, 15, 67]
-N_TRAIN = 250
-N_TEST = 250
+N_TRAIN = 10000
+N_TEST = 2000
 N_EPOCHS = 5
 
 start_time = time.time()
@@ -192,7 +192,7 @@ for SEED in SEEDS:
     test_loader = None
 
     # Data Loader
-    train_loader, test_loader = load_pcam_subset(N_TRAIN, N_TEST, r"./data/raw/", batch_size=32, seed=SEED)
+    train_loader, test_loader = load_pcam_subset(N_TRAIN, N_TEST, r"./data/raw/", batch_size=64, seed=SEED)
 
     train_loader_augmented = combine_multiple_augmentations(train_loader, transforms, extend=False)
 
