@@ -1,5 +1,3 @@
-## subfiles/layers.py ##
-
 # Imports
 import os
 import numpy as np
@@ -36,10 +34,8 @@ class LiftingConv2d(nn.Module):
         group: Group, # custom group object implementing H
         stride: int = 1,
         padding: int = 0,
-        bias: bool = False, # breaks equivariance
-        padding_mode: str = 'zeros',
-        #device=None,
-        #dtype=None
+        bias: bool = False,
+        padding_mode: str = 'zeros'
     ) -> None:
         super().__init__()
 
@@ -53,7 +49,7 @@ class LiftingConv2d(nn.Module):
         self.padding = padding
         self.padding_mode = padding_mode
         self.stride = stride
-        self.num_group_elements = group.elements().numel()
+        self.num_group_elements = group.elements().shape[0]
 
         # Enable bias parameter
         if bias:
@@ -97,10 +93,8 @@ class LiftingConv2d(nn.Module):
         # Add bias term
         if self.bias is not None:
             input += self.bias.view(1, -1, 1, 1, 1)  # broadcast over G, H, W
-            #input += self.bias.view(1, -1, 1, 1)
 
         return input
-
 
 
 # Group Convolution Layer
@@ -114,9 +108,7 @@ class GroupConv2d(nn.Module):
         stride: int = 1,
         padding: int = 0,
         bias: bool = True,
-        padding_mode: str = 'zeros',
-        #device=None,
-        #dtype=None
+        padding_mode: str = 'zeros'
     ) -> None:
         super().__init__()
 
@@ -131,7 +123,7 @@ class GroupConv2d(nn.Module):
         self.padding = padding
         self.padding_mode = padding_mode
         self.stride = stride
-        self.num_group_elements = group.elements().numel()
+        self.num_group_elements = group.elements().shape[0]
 
         if bias:
             self.bias = nn.Parameter(torch.empty(out_channels))  # one per G-feature map
@@ -180,10 +172,3 @@ class GroupConv2d(nn.Module):
             input += self.bias.view(1, -1, 1, 1, 1)  # [B, C_out, G, H, W]
 
         return input
-
-
-# Projection Layer
-
-
-
-# Global Pooling Layer
