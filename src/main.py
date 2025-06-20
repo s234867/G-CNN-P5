@@ -124,6 +124,7 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
 
         logging.info(
             f"Epoch {epoch}: {name} | "
+            f"Train Loss: {train_loss:.4f} | Test Loss: {test_loss:.4f} | "
             f"Train Acc: {train_acc:.4f} | Test Acc: {test_acc:.4f} | "
             f"F1: {f1:.4f} | AUROC: {auroc:.4f}"
         )
@@ -192,7 +193,7 @@ GCNN_DIHEDRAL_WEIGHT_DECAY = 0.0
 SEEDS = [42, 15, 67, 1312, 8]
 N_TRAIN = 20000
 N_TEST = 10000
-N_EPOCHS = 30
+N_EPOCHS = 2
 
 start_time = time.time()
 
@@ -345,4 +346,3 @@ for model_name, histories in results.items():
     )
 
 save_results(results)
-
