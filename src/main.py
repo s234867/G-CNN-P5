@@ -87,7 +87,10 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
             for x, y in test_loader:
                 x, y = x.to(device), y.to(device)
                 out = model(x)
-                preds = out.argmax(1)
+                # Fix for the prediction apparently
+                preds = out.detach().cpu().argmax(dim=1)
+                targets = y.detach().cpu()
+                correct += (preds == targets).sum().item()
                 probs = torch.softmax(out, dim=1)[:, 1]  # for AUROC
 
                 all_preds.append(preds.cpu())
@@ -96,14 +99,17 @@ def train_model(model_name, name, model_hparams, optimizer_name, optimizer_hpara
 
                 loss = criterion(out, y)
                 loss_sum += loss.item() * x.size(0)
-                correct += (out.argmax(1) == y).sum().item()
                 total += x.size(0)
-        test_loss = loss_sum / total
-        test_acc = correct / total
+        test_loss = loss_sum / float(total)
+        test_acc = correct / float(total)
 
         all_preds = torch.cat(all_preds)
         all_targets = torch.cat(all_targets)
         all_probs = torch.cat(all_probs)
+
+        if epoch == n_epochs:
+            history["confusion_preds"] = all_preds.tolist()
+            history["confusion_targets"] = all_targets.tolist()
 
         pred_counts = torch.bincount(all_preds, minlength=2)
 
@@ -190,10 +196,10 @@ GCNN_DIHEDRAL_WEIGHT_DECAY = 0.0
 
 
 # TRAINING STUFF
-SEEDS = [42, 15, 67, 1312, 8]
+SEEDS = [42, 15, 67]#, 1312, 8]
 N_TRAIN = 20000
 N_TEST = 10000
-N_EPOCHS = 2
+N_EPOCHS = 30
 
 start_time = time.time()
 
