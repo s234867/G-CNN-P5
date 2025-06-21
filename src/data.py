@@ -90,7 +90,7 @@ def load_pcam_subset(train_size, test_size, data_dir=r'./data/raw', seed=42, bat
     return train_set, test_set
 
 
-def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/raw', seed=42, batch_size=32, normalize=True, 
+def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/raw', seed=67, batch_size=32, normalize=True, 
                                        test_x_path='camelyonpatch_level_2_split_train_x.h5', 
                                        test_y_path='camelyonpatch_level_2_split_train_y.h5'):
     # Reproducibility which is VERY important
@@ -113,9 +113,10 @@ def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/
 
     # Convert to torch tensors, since torch expect difference shape [N, H, W, C] -> [N, C, H, W]
     # Also we normalize
-    X_test = torch.from_numpy(X_test).permute(0, 3, 1, 2).float() / 255.0
+    X_test = torch.from_numpy(X_test).permute(0, 3, 1, 2).float()
 
     if normalize:
+        X_test =  X_test / 255.0
         # moved everything down here, so if no normalization we dont have to import the entire big dataset.. SMAAAAAAAAAAAAAAART
         train_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_x.h5')
         train_y_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_y.h5')
