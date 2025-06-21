@@ -85,8 +85,6 @@ for model in model_files:
             group=group
         ).to(device)
 
-
-
     elif "GCNN_DIHEDRAL" in model_name:
         n = int(model_name.split("_")[2].replace(".pt", ""))
         group = DihedralGroup(n=n).to(device)
