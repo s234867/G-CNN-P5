@@ -1,52 +1,15 @@
 ## final_tests.py ##
 
 import torch
-import torch.nn as nn
 import numpy as np
-import random
 from data import load_pcam_subset_for_final_testing
-from data_augmentation import combine_multiple_augmentations
 from MODELS import GECNN, CNN
 from steerable import SteerableGCNN
 #SteerableGCNN = None
 from subfiles.groups import CyclicGroup, DihedralGroup
-import statistics
-import time
 import os
-import torchvision.transforms.functional as TF
-
-from save_data import save_results
-
-from sklearn.metrics import f1_score, roc_auc_score
-
-import logging
-
 import csv
-import os
-from data import load_pcam_subset
 
-
-def save_preds():
-    # Path to save confusion data
-    confusion_csv_path = "confusion_results.csv"
-    write_conf_header = not os.path.exists(confusion_csv_path)
-
-    with open(confusion_csv_path, mode="a", newline="") as file:
-        writer = csv.writer(file)
-
-        if write_conf_header:
-            writer.writerow(["Model", "Seed", "Epoch", "Preds", "Targets"])
-
-        for model_name, histories in results.items():
-            for entry in histories:
-                seed = entry["seed"]
-                history = entry["history"]
-                if "confusion_preds" in history and "confusion_targets" in history:
-                    writer.writerow([
-                        model_name, seed, "final",
-                        " ".join(map(str, history["confusion_preds"])),
-                        " ".join(map(str, history["confusion_targets"]))
-                ])
 
 
 # remove old file to avoid duplicates
@@ -58,7 +21,7 @@ SEED = 67
 N_TRAIN = 20000
 N_TEST = 1000
 # Data Loader
-test_loader = load_pcam_subset_for_final_testing(N_TRAIN, N_TEST, r"./data/raw/", batch_size=32, seed=SEED)
+test_loader = load_pcam_subset_for_final_testing(N_TRAIN, N_TEST, r"./data/raw/", batch_size=32, seed=SEED, normalize=False, test_x_path='final_test_x.h5', test_y_path='final_test_y.h5')
 
 # get the models (instead of just hardcoding the names)
 model_dir = "models"
@@ -78,6 +41,10 @@ CNN_HIDDEN_CHANNELS = 16
 
 # STEERABLE
 STEERABLE_NUM_HIDDEN = 4
+BASE_GROUP_ORDER = 4
+cyclic_group = CyclicGroup(n=BASE_GROUP_ORDER).to(device)
+num_elements = cyclic_group.elements().numel()
+HIDDEN_CHANNELS = round(CNN_HIDDEN_CHANNELS/np.log2(num_elements))
 
 # GCNN
 GCNN_NUM_HIDDEN = 4
@@ -135,7 +102,15 @@ for model in model_files:
             group=group
         ).to(device)
 
-
+    elif "SteerableGCNN" in model_name:
+        model_class = SteerableGCNN
+        model_instance = model_class(
+            in_channels=IN_CHANNELS,
+            out_channels=OUT_CHANNELS,
+            kernel_size=KERNEL_SIZE,
+            num_hidden=STEERABLE_NUM_HIDDEN,
+            hidden_channels=HIDDEN_CHANNELS
+        ).to(device)
 
 
     else:

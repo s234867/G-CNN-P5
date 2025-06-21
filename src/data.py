@@ -90,41 +90,50 @@ def load_pcam_subset(train_size, test_size, data_dir=r'./data/raw', seed=42, bat
     return train_set, test_set
 
 
-def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/raw', seed=42, batch_size=32):
+def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/raw', seed=42, batch_size=32, normalize=True, 
+                                       test_x_path='camelyonpatch_level_2_split_train_x.h5', 
+                                       test_y_path='camelyonpatch_level_2_split_train_y.h5'):
     # Reproducibility which is VERY important
     set_seed(seed)
     g = torch.Generator()
     g.manual_seed(seed)
 
     # Paths for the data we have on pc
-    train_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_x.h5')
-    train_y_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_y.h5')
-    test_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_train_x.h5')
-    test_y_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_train_y.h5')
+    test_x_path = os.path.join(data_dir, test_x_path)
+    test_y_path = os.path.join(data_dir, test_y_path)
 
     # Sample indices without loading full data which is a trick we use to only load the data we need
     # and NOT load the entire dataset (which requires large amounts of memory)
-    train_indices = sample_indices(train_x_path, train_size)
     test_indices = sample_indices(test_x_path, test_size)
 
     # Now we load only the selected samples
-    X_train = load_samples(train_x_path, train_indices)
-    y_train = load_samples(train_y_path, train_indices)
+    
     X_test = load_samples(test_x_path, test_indices)
     y_test = load_samples(test_y_path, test_indices)
 
     # Convert to torch tensors, since torch expect difference shape [N, H, W, C] -> [N, C, H, W]
     # Also we normalize
-    X_train = torch.from_numpy(X_train).permute(0, 3, 1, 2).float() / 255.0 
     X_test = torch.from_numpy(X_test).permute(0, 3, 1, 2).float() / 255.0
 
-    # Add normalization (channel-wise)
-    mean = X_train.mean(dim=(0, 2, 3), keepdim=True)
-    std = X_train.std(dim=(0, 2, 3), keepdim=True)
+    if normalize:
+        # moved everything down here, so if no normalization we dont have to import the entire big dataset.. SMAAAAAAAAAAAAAAART
+        train_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_x.h5')
+        train_y_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_y.h5')
 
-    # Apply to both train and test
-    X_train = (X_train - mean) / std
-    X_test = (X_test - mean) / std
+        train_indices = sample_indices(train_x_path, train_size)
+
+        X_train = load_samples(train_x_path, train_indices)
+        y_train = load_samples(train_y_path, train_indices)
+
+        X_train = torch.from_numpy(X_train).permute(0, 3, 1, 2).float() / 255.0 
+
+        # Add normalization (channel-wise)
+        mean = X_train.mean(dim=(0, 2, 3), keepdim=True)
+        std = X_train.std(dim=(0, 2, 3), keepdim=True)
+
+        # Apply to both train and test
+        X_train = (X_train - mean) / std
+        X_test = (X_test - mean) / std
 
     # Squeeze the labels so its [500] instead of [500, 1], also convert it to an int
     y_test = torch.from_numpy(y_test).squeeze().long()
@@ -135,7 +144,43 @@ def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/
 
     return test_set
 
+
+import os
+import h5py
+import torch
+from data import load_pcam_subset_for_final_testing
+
+def save_final_testset_split(x_save_path, y_save_path, n_train=20000, n_test=1000, data_dir="./data/raw", seed=67, batch_size=32):
+    # Load test set
+    test_loader = load_pcam_subset_for_final_testing(n_train, n_test, data_dir=data_dir, seed=seed, batch_size=batch_size)
+
+    all_images = []
+    all_labels = []
+
+    for x, y in test_loader:
+        all_images.append(x)
+        all_labels.append(y)
+
+    # Stack into tensors
+    all_images = torch.cat(all_images, dim=0).cpu().numpy()  # shape: (N, 3, H, W)
+    all_labels = torch.cat(all_labels, dim=0).cpu().numpy()  # shape: (N,)
+
+    # Save images to x.h5
+    with h5py.File(x_save_path, "w") as f:
+        f.create_dataset("x", data=all_images, compression="gzip")
+    print(f"Saved images to {x_save_path}")
+
+    # Save labels to y.h5
+    with h5py.File(y_save_path, "w") as f:
+        f.create_dataset("y", data=all_labels, compression="gzip")
+    print(f"Saved labels to {y_save_path}")
+
+
 if __name__ == "__main__":
+    if 1:
+        x_path = "./data/raw/final_test_x.h5"
+        y_path = "./data/raw/final_test_y.h5"
+        save_final_testset_split(x_path, y_path)
     train_set, test_set = load_pcam_subset(train_size=100, test_size=100, data_dir=r"/zhome/d1/3/206707/Desktop/G-CNN-P5/data/raw/")
 
     # find device
