@@ -71,7 +71,7 @@ for model in model_files:
         continue
 
     elif "GCNN_CYCLIC" in model_name:
-        n = int(model_name.split("_")[2])
+        n = int(model_name.split("_")[2].replace(".pt", ""))
         group = CyclicGroup(n=n).to(device)
         num_elements = group.elements().numel()
         hidden_channels = round(CNN_HIDDEN_CHANNELS / np.log2(num_elements))  # MATCHES TRAINING
@@ -88,7 +88,7 @@ for model in model_files:
 
 
     elif "GCNN_DIHEDRAL" in model_name:
-        n = int(model_name.split("_")[2])
+        n = int(model_name.split("_")[2].replace(".pt", ""))
         group = DihedralGroup(n=n).to(device)
 
         state_dict = torch.load(model_path, map_location=device)
@@ -111,7 +111,6 @@ for model in model_files:
             num_hidden=STEERABLE_NUM_HIDDEN,
             hidden_channels=HIDDEN_CHANNELS
         ).to(device)
-
 
     else:
         print(f"Unknown model type for: {model_name}")

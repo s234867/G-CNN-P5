@@ -163,6 +163,7 @@ def save_final_testset_split(x_save_path, y_save_path, n_train=20000, n_test=100
 
     # Stack into tensors
     all_images = torch.cat(all_images, dim=0).cpu().numpy()  # shape: (N, 3, H, W)
+    all_images = np.transpose(all_images, (0, 2, 3, 1))  # fix for HDF5 saving
     all_labels = torch.cat(all_labels, dim=0).cpu().numpy()  # shape: (N,)
 
     # Save images to x.h5
