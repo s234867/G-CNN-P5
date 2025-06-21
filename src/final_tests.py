@@ -66,10 +66,6 @@ for model in model_files:
             hidden_channels=CNN_HIDDEN_CHANNELS
         ).to(device)
 
-    elif "Steerable" in model_name:
-        print(f"Skipping {model_name} (SteerableGCNN is None)")
-        continue
-
     elif "GCNN_CYCLIC" in model_name:
         n = int(model_name.split("_")[2].replace(".pt", ""))
         group = CyclicGroup(n=n).to(device)
