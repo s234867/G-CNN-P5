@@ -89,6 +89,52 @@ def load_pcam_subset(train_size, test_size, data_dir=r'./data/raw', seed=42, bat
 
     return train_set, test_set
 
+
+def load_pcam_subset_for_final_testing(train_size, test_size, data_dir=r'./data/raw', seed=42, batch_size=32):
+    # Reproducibility which is VERY important
+    set_seed(seed)
+    g = torch.Generator()
+    g.manual_seed(seed)
+
+    # Paths for the data we have on pc
+    train_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_x.h5')
+    train_y_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_valid_y.h5')
+    test_x_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_train_x.h5')
+    test_y_path = os.path.join(data_dir, 'camelyonpatch_level_2_split_train_y.h5')
+
+    # Sample indices without loading full data which is a trick we use to only load the data we need
+    # and NOT load the entire dataset (which requires large amounts of memory)
+    train_indices = sample_indices(train_x_path, train_size)
+    test_indices = sample_indices(test_x_path, test_size)
+
+    # Now we load only the selected samples
+    X_train = load_samples(train_x_path, train_indices)
+    y_train = load_samples(train_y_path, train_indices)
+    X_test = load_samples(test_x_path, test_indices)
+    y_test = load_samples(test_y_path, test_indices)
+
+    # Convert to torch tensors, since torch expect difference shape [N, H, W, C] -> [N, C, H, W]
+    # Also we normalize
+    X_train = torch.from_numpy(X_train).permute(0, 3, 1, 2).float() / 255.0 
+    X_test = torch.from_numpy(X_test).permute(0, 3, 1, 2).float() / 255.0
+
+    # Add normalization (channel-wise)
+    mean = X_train.mean(dim=(0, 2, 3), keepdim=True)
+    std = X_train.std(dim=(0, 2, 3), keepdim=True)
+
+    # Apply to both train and test
+    X_train = (X_train - mean) / std
+    X_test = (X_test - mean) / std
+
+    # Squeeze the labels so its [500] instead of [500, 1], also convert it to an int
+    y_test = torch.from_numpy(y_test).squeeze().long()
+
+    print("Test label distribution:", torch.bincount(y_test))
+
+    test_set = DataLoader(TensorDataset(X_test, y_test), batch_size=batch_size)
+
+    return test_set
+
 if __name__ == "__main__":
     train_set, test_set = load_pcam_subset(train_size=100, test_size=100, data_dir=r"/zhome/d1/3/206707/Desktop/G-CNN-P5/data/raw/")
 

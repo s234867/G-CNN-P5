@@ -7,6 +7,7 @@ def save_results(results, csv_path="results.csv", confusion_csv_path="preds.csv"
     with open(csv_path, mode="a", newline="") as file:
         writer = csv.writer(file)
 
+        # all the metrics we want to save
         if write_header:
             writer.writerow([
                 "Model", "Seed", "Epoch",
@@ -37,7 +38,7 @@ def save_results(results, csv_path="results.csv", confusion_csv_path="preds.csv"
     
     write_conf_header = not os.path.exists(confusion_csv_path)
 
-    # --- Save confusion preds/targets if available ---
+    # save the confusion metrics
     with open(confusion_csv_path, mode="a", newline="") as file:
         writer = csv.writer(file)
 
@@ -49,7 +50,7 @@ def save_results(results, csv_path="results.csv", confusion_csv_path="preds.csv"
                 seed = entry["seed"]
                 history = entry["history"]
                 if "confusion_preds" in history and "confusion_targets" in history:
-                    # Assume this is only stored for final epoch
+                    # only for last epoch tho "final"
                     writer.writerow([
                         model_name, seed, "final",
                         " ".join(map(str, history["confusion_preds"])),
