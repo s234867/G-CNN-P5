@@ -97,13 +97,15 @@ for model in model_files:
         ).to(device)
 
     elif "SteerableGCNN" in model_name:
+        state_dict = torch.load(model_path, map_location=device)
+        hidden_channels_steerable = state_dict["classifier.weight"].shape[1]  # adjust if needed
         model_class = SteerableGCNN
         model_instance = model_class(
             in_channels=IN_CHANNELS,
             out_channels=OUT_CHANNELS,
             kernel_size=KERNEL_SIZE,
             num_hidden=STEERABLE_NUM_HIDDEN,
-            hidden_channels=HIDDEN_CHANNELS
+            hidden_channels=hidden_channels_steerable
         ).to(device)
 
     else:
