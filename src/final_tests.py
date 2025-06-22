@@ -4,8 +4,8 @@ import torch
 import numpy as np
 from data import load_pcam_subset_for_final_testing
 from MODELS import GECNN, CNN
-#from steerable import SteerableGCNN
-SteerableGCNN = None
+from steerable import SteerableGCNN
+#SteerableGCNN = None
 from subfiles.groups import CyclicGroup, DihedralGroup
 import os
 import csv
