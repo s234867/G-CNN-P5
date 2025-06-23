@@ -1,0 +1,67 @@
+3bbc6ef - s234867, 13 seconds ago : Added code for gridsearch
+b7ac4bc - s234867, 4 minutes ago : Created log and shortlog for git
+669a696 - s234867, 74 minutes ago : Updated to incluse Sample Images from dataset
+3fc2281 - s234867, 89 minutes ago : Added feature maps
+0326690 - s234867, 15 hours ago : update to visualize.ipynb
+111ac47 - s234867, 15 hours ago : Merge branch 'main' of https://github.com/s234867/G-CNN-P5
+a808532 - s234867, 15 hours ago : Added visualizations, results and visualize.ipynb
+01e4387 - Glymse (S234845), 18 hours ago : Notebook for the motivatiol example. I have made a diagram for translation equvirance, and one that show how convolution breaks under rotation.
+44f6c14 - s234867, 26 hours ago : cross validation instead fix
+9c03444 - s234867, 26 hours ago : cross validation instead
+5de3748 - s234867, 2 days ago : Fixed steerable validation again
+99758fa - s234867, 2 days ago : Fixed steerable validation test
+91e3920 - s234867, 2 days ago : Fixed steerable validation test
+150a100 - s234867, 2 days ago : forgot to uncomment steerable in final_tests.py
+0b7a4f7 - s234867, 2 days ago : Fixed normalization....
+07a8818 - s234867, 2 days ago : Fixed dataset loading for final test validation
+c196ec9 - s234867, 2 days ago : Renamed models for simplification
+e5b66b8 - s234867, 2 days ago : Updates to validation, with correct load of subdataset for HPC
+3fcae0d - s234867, 2 days ago : Final trained models
+d0a7f69 - s234867, 2 days ago : Merge branch 'main' of https://github.com/s234867/G-CNN-P5
+85aed08 - s234867, 2 days ago : Added for final validation
+50686bb - Glymse (S234845), 2 days ago : Cleaned up the visualisation notebook.
+2d02b20 - Glymse (S234845), 2 days ago : added visulisations to GCNN, lifting, group and projection layer. I used the non-optimised GCNN architecture. Includes a flattened feature map that shows equvivariance.
+629ddac - s234867, 3 days ago : Added data storing for confusion matrix
+b20de87 - s234867, 3 days ago : update print
+2a0acb2 - s234867, 4 days ago : padding
+407ddb4 - s234867, 4 days ago : Fixed training
+d4f9bd3 - s234867, 4 days ago : main.py updated for actual training and testing!
+cb531ed - s234867, 4 days ago : Results of grid search
+4ad94ab - s234867, 4 days ago : Fixed for grid search with dihedral
+035e200 - jakob reeh, 4 days ago : Merge origin/groups into main
+9f6c4a1 - s234867, 4 days ago : Reduced grid search parameters for quicker testing - took too long before
+e440cc8 - s234867, 4 days ago : Fixed dihedral training
+85349df - s234867, 4 days ago : removed input()
+acef33e - s234867, 4 days ago : For gridsearch
+d476354 - jakob reeh, 4 days ago : Small changes in code
+539c7cf - jakob reeh, 4 days ago : Small changes made to main.py, data.py and run.sh
+8b9a0a7 - jakob reeh, 4 days ago : Small changes made to main.py, data.py and run.sh
+98fab1d - Xander Baatz, 5 days ago : changed bilinear interpolation to support spatial grids also
+3cb14ed - Xander Baatz, 5 days ago : added support for Dihedral group
+071bf89 - Xander Baatz, 5 days ago : added full support for Dihedral group, made base kernel to inherit from, minor performance optimizations
+2e8253c - Xander Baatz, 5 days ago : changed padding setting
+0c6f964 - Xander Baatz, 5 days ago : data set/loader boilerplate uploaded with proper transforms
+5a82281 - Xander Baatz, 5 days ago : optimized code, removed redundant dimensionality check, fully integrated Dihedral group
+9e063f7 - Glymse (S234845), 5 days ago : Added the non optimised GCNN arcitecture , which includes a lifting, group and projection layer that is 1:1 to the formulas in our theory, and added a test to show that its too slow to be used.
+99d9680 - jakob reeh, 5 days ago : Updated .gitignore
+9419da2 - jakob reeh, 5 days ago : Add run.sh LSF submission script
+ad9ad9b - jakob reeh, 6 days ago : Updated data augmentation
+e962a1e - jakob reeh, 6 days ago : Merge branch 'add-main'
+2f65214 - jakob reeh, 6 days ago : Add src/main.py
+d22ef75 - s234867, 6 days ago : Changes to CNN, GECNN and Steerable models, also data save
+6f25ac5 - Glymse (S234845), 6 days ago : Moved subfiles into src
+f4768db - Xander Baatz, 6 days ago : lifting layer and group layer, now with bias mimicking Conv2d
+33f47de - Xander Baatz, 6 days ago : initial push of utils, bilinear and trilinear interpolation for use in interpolative kernels
+02070c4 - Glymse (S234845), 6 days ago : Added lifting and group base kernels. Also added group base for the cyclic group. Ideaf for dihedral is there, but not functioning yet.
+db4185b - jakob reeh, 10 days ago : Added Dataugmentation
+a835646 - jakob reeh, 10 days ago : Updated data.py again
+8cb9aa7 - jakob reeh, 12 days ago : Updated dataloader to run batches for better memory
+53683cd - s234867, 13 days ago : test
+e91ec32 - unknown, 13 days ago : Made data loader for torch and updated gitignore
+d44d97c - Glymse (S234845), 13 days ago : Fixed requirements.txt to only have needed packages for group theory implemtation. Further work will include a requirement.txt that installs libaryes depending on architecture.
+55e70d9 - S234845, 13 days ago : Added devcontainer to gitignore
+ea69d26 - jakob reeh, 13 days ago : Add .gitkeep placeholders for src and dockerfiles
+6345140 - jakob reeh, 13 days ago : Keep raw/ and processed/ dirs with .gitkeep placeholders
+4430477 - jakob reeh, 13 days ago : fixed error
+ee07896 - jakob reeh, 13 days ago : Updated folders
+3b97491 - s234867, 13 days ago : Initial commit
