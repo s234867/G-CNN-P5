@@ -1,13 +1,14 @@
-3bbc6ef - s234867, 13 seconds ago : Added code for gridsearch
-b7ac4bc - s234867, 4 minutes ago : Created log and shortlog for git
-669a696 - s234867, 74 minutes ago : Updated to incluse Sample Images from dataset
-3fc2281 - s234867, 89 minutes ago : Added feature maps
-0326690 - s234867, 15 hours ago : update to visualize.ipynb
-111ac47 - s234867, 15 hours ago : Merge branch 'main' of https://github.com/s234867/G-CNN-P5
-a808532 - s234867, 15 hours ago : Added visualizations, results and visualize.ipynb
-01e4387 - Glymse (S234845), 18 hours ago : Notebook for the motivatiol example. I have made a diagram for translation equvirance, and one that show how convolution breaks under rotation.
-44f6c14 - s234867, 26 hours ago : cross validation instead fix
-9c03444 - s234867, 26 hours ago : cross validation instead
+a312daa - s234867, 6 hours ago : pushed updated logs after final pushes
+3bbc6ef - s234867, 6 hours ago : Added code for gridsearch
+b7ac4bc - s234867, 6 hours ago : Created log and shortlog for git
+669a696 - s234867, 8 hours ago : Updated to incluse Sample Images from dataset
+3fc2281 - s234867, 8 hours ago : Added feature maps
+0326690 - s234867, 21 hours ago : update to visualize.ipynb
+111ac47 - s234867, 21 hours ago : Merge branch 'main' of https://github.com/s234867/G-CNN-P5
+a808532 - s234867, 21 hours ago : Added visualizations, results and visualize.ipynb
+01e4387 - Glymse (S234845), 24 hours ago : Notebook for the motivatiol example. I have made a diagram for translation equvirance, and one that show how convolution breaks under rotation.
+44f6c14 - s234867, 33 hours ago : cross validation instead fix
+9c03444 - s234867, 33 hours ago : cross validation instead
 5de3748 - s234867, 2 days ago : Fixed steerable validation again
 99758fa - s234867, 2 days ago : Fixed steerable validation test
 91e3920 - s234867, 2 days ago : Fixed steerable validation test
