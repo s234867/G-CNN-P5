@@ -1,5 +1,15 @@
 matplotlib==3.8.2
 numpy
-torch==2.5.1
 torchvision==0.20.1
+torch==2.6.0+cu118
+torchaudio==2.6.0
+e2cnn>=0.6.0
+escnn>=0.1.0
+numpy>=1.23
+h5py>=3.7
+pandas>=1.5
+scikit-learn>=1.2
+seaborn>=0.12
+matplotlib>=3.6
+tqdm>=4.65
 
